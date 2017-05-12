@@ -1,0 +1,6 @@
+[package]
+name = "reading-pfds"
+version = "0.1.0"
+authors = ["rhysd <lin90162@yahoo.co.jp>"]
+
+[dependencies]
