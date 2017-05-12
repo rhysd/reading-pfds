@@ -2,5 +2,10 @@
 name = "reading-pfds"
 version = "0.1.0"
 authors = ["rhysd <lin90162@yahoo.co.jp>"]
+description = "My practices reading 'Purely Functional Data Structures'"
+repository = "https://github.com/rhysd/reading-pfds"
+readme = "README.md"
+include = ["src/*.rs", "Cargo.toml", "LICENSE"]
+license = "MIT"
 
 [dependencies]
