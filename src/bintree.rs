@@ -21,7 +21,7 @@ where T: Clone + PartialOrd + Debug {
         }
     }
 
-    pub fn member_impl(&self, v: &T, memo: Option<&T>) -> bool {
+    fn member_impl(&self, v: &T, memo: Option<&T>) -> bool {
         match *self {
             BinTree::Leaf => {
                 match memo {
@@ -45,7 +45,7 @@ where T: Clone + PartialOrd + Debug {
         self.member_impl(v, None)
     }
 
-    pub fn insert_impl(&self, v: T, memo: Option<&T>) -> Option<Self> {
+    fn insert_impl(&self, v: T, memo: Option<&T>) -> Option<Self> {
         match *self {
             BinTree::Leaf => {
                 // exercise 2.4: Check memo to know there is an element which is equivalent to `v`.
