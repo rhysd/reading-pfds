@@ -11,7 +11,7 @@ pub enum List<T>
 }
 
 impl<T> List<T>
-    where T: Clone + PartialEq + Debug {
+where T: Clone + PartialEq + Debug {
 
     pub fn empty() -> Self {
         List::Nil
@@ -39,6 +39,7 @@ impl<T> List<T>
         }
     }
 
+    // Preceding list can be shared and don't need to be cloned.
     pub fn concat(&self, rhs: List<T>) -> Self {
         match *self {
             List::Nil => rhs,
@@ -46,6 +47,7 @@ impl<T> List<T>
         }
     }
 
+    // Cells after `idx` can be shared (don't need to copy)
     pub fn update_at(&self, idx: u32, v: T) -> Self {
         match *self {
             List::Nil => panic!("List is empty!"),
@@ -58,6 +60,7 @@ impl<T> List<T>
         }
     }
 
+    // Elements of returned list are shared.
     pub fn suffixes(&self) -> List<Self> {
         match *self {
             List::Nil => List::Nil.cons(List::Nil),
