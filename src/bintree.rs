@@ -49,13 +49,11 @@ where T: Clone + PartialOrd + Debug {
         match *self {
             BinTree::Leaf => {
                 // exercise 2.4: Check memo to know there is an element which is equivalent to `v`.
-                if let Some(x) = memo {
-                    if !(x < &v) {
-                        // exercise 2.3: If the tree already has the value, we don't need to clone tree at all.
-                        return None;
-                    }
+                // exercise 2.3: If the tree already has the value, we don't need to clone tree at all.
+                match memo {
+                    Some(x) if !(x < &v) => None,
+                    _ => Some(BinTree::Knot(v, Rc::new(BinTree::Leaf), Rc::new(BinTree::Leaf))),
                 }
-                Some(BinTree::Knot(v, Rc::new(BinTree::Leaf), Rc::new(BinTree::Leaf)))
             },
             BinTree::Knot(ref x, ref l, ref r) => {
                 // exercise 2.4: Makes number of comparing element d + 1 (not 2d) where d is depth.
