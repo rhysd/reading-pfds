@@ -47,6 +47,10 @@ fn heap<T: Clone + Ord + Debug>(trees: Trees<T>) -> BinHeap<T> {
 
 impl<T> BinHeap<T>
 where T: Clone + Ord + Debug {
+    pub fn empty() -> Self {
+        heap(List::empty())
+    }
+
     fn insert_tree(t: Tree<T>, ts: &Trees<T>) -> Trees<T> {
         match *ts.0 {
             Node::Nil => ts.cons(t),
@@ -82,6 +86,22 @@ where T: Clone + Ord + Debug {
         heap(BinHeap::merge_trees(&self.trees, &other.trees))
     }
 
+    fn find_min_tree(trees: &Trees<T>) -> &Tree<T> {
+        match *trees.0 {
+            Node::Nil => panic!("No tree in heap!"),
+            Node::Cons(ref t, ref ts) if ts.is_empty() => t,
+            Node::Cons(ref t, ref ts) => {
+                let t2 = BinHeap::find_min_tree(ts);
+                if t.val <= t2.val { t } else { t2 }
+            },
+        }
+    }
+
+    // exercise 3.5: Implement find_min without remove_min_tree
+    pub fn find_min(&self) -> &T {
+        &BinHeap::find_min_tree(&self.trees).val
+    }
+
     fn remove_min_tree(trees: &Trees<T>) -> (&Tree<T>, Trees<T>) {
         match *trees.0 {
             Node::Nil => panic!("No tree in heap!"),
@@ -97,14 +117,49 @@ where T: Clone + Ord + Debug {
         }
     }
 
-    fn find_min(&self) -> &T {
-        &BinHeap::remove_min_tree(&self.trees).0.val
-    }
-
-    fn delete_min(&self) -> Self {
+    pub fn delete_min(&self) -> Self {
         // Note: Rust's pattern cannot contain both by-ref and by-move binding at the same time.
         let (t, ts2) = BinHeap::remove_min_tree(&self.trees);
         let &Tree{rank: _, val: _, children: ref ts1} = t;
         heap(BinHeap::merge_trees(&ts1.rev(), &ts2))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+
+    #[test]
+    fn test_empty() {
+        let h = BinHeap::<i32>::empty();
+        assert!(h.trees.is_empty());
+    }
+
+    #[test]
+    fn test_insert() {
+        let mut h = BinHeap::empty().insert(3).insert(1).insert(7).insert(10);
+        for i in &[1, 3, 7, 10] {
+            assert_eq!(h.find_min(), i);
+            h = h.delete_min();
+        }
+    }
+
+    #[test]
+    fn test_merge() {
+        let h1 = BinHeap::empty().insert(3).insert(1).insert(7).insert(10);
+        let h2 = BinHeap::empty().insert(2).insert(4).insert(11).insert(0);
+        let mut h = h1.merge(&h2);
+        for i in &[0, 1, 2, 3, 4, 7, 10, 11] {
+            assert_eq!(h.find_min(), i);
+            h = h.delete_min();
+        }
+        assert!(h.trees.is_empty());
+        h = h2.merge(&h1);
+        for i in &[0, 1, 2, 3, 4, 7, 10, 11] {
+            assert_eq!(h.find_min(), i);
+            h = h.delete_min();
+        }
+        assert!(h.trees.is_empty());
     }
 }
