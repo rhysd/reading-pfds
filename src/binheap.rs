@@ -50,7 +50,7 @@ where T: Clone + Ord + Debug {
 type Trees<T> = List<Tree<T>>;
 
 // Binomial heap is a sorted list of binomial trees whose ranks are not the same each other.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct BinHeap<T: Clone + Ord + Debug> {
     trees: Trees<T>,
 }
@@ -154,10 +154,67 @@ where T: Clone + Ord + Debug {
     }
 }
 
+// exercise 3.7: Make `find_min` O(1)
+#[derive(Debug, Clone)]
+pub struct BinHeap2<T: Clone + Ord + Debug> {
+    min: Option<T>,
+    rest: BinHeap<T>,
+}
+
+impl<T> BinHeap2<T>
+where T: Clone + Ord + Debug {
+    pub fn empty() -> Self {
+        BinHeap2{min: None, rest: BinHeap::empty()}
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.min == None
+    }
+
+    pub fn insert(&self, v: T) -> Self {
+        match self.min {
+            None => BinHeap2 {min: Some(v), rest: self.rest.clone()},
+            Some(ref min) if v < *min => BinHeap2 {min: Some(v), rest: self.rest.insert(min.clone())},
+            Some(ref min) => BinHeap2 {min: Some(min.clone()), rest: self.rest.insert(v)},
+        }
+    }
+
+    pub fn merge(&self, other: &Self) -> Self {
+        if self.min < other.min {
+            BinHeap2 {
+                min: Some(self.min.clone().unwrap()),
+                rest: self.rest.merge(&other.rest).insert(other.min.clone().unwrap()),
+            }
+        } else {
+            BinHeap2 {
+                min: Some(other.min.clone().unwrap()),
+                rest: other.rest.merge(&self.rest).insert(self.min.clone().unwrap()),
+            }
+        }
+    }
+
+    pub fn find_min(&self) -> &T {
+        match &self.min {
+            &Some(ref min) => min,
+            &None => panic!("heap is empty!"),
+        }
+    }
+
+    pub fn delete_min(&self) -> Self {
+        if self.rest.trees.is_empty() {
+            assert!(self.min.is_some());
+            BinHeap2::empty()
+        } else {
+            let min = Some(self.rest.find_min().clone());
+            BinHeap2 {min, rest: self.rest.delete_min()}
+        }
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
-
 
     #[test]
     fn test_empty() {
@@ -190,5 +247,38 @@ mod tests {
             h = h.delete_min();
         }
         assert!(h.trees.is_empty());
+    }
+
+    #[test]
+    fn test_empty2() {
+        let h = BinHeap2::<i32>::empty();
+        assert!(h.is_empty());
+    }
+
+    #[test]
+    fn test_insert2() {
+        let mut h = BinHeap2::empty().insert(3).insert(1).insert(7).insert(10);
+        for i in &[1, 3, 7, 10] {
+            assert_eq!(h.find_min(), i);
+            h = h.delete_min();
+        }
+    }
+
+    #[test]
+    fn test_merge2() {
+        let h1 = BinHeap2::empty().insert(3).insert(1).insert(7).insert(10);
+        let h2 = BinHeap2::empty().insert(2).insert(4).insert(11).insert(0);
+        let mut h = h1.merge(&h2);
+        for i in &[0, 1, 2, 3, 4, 7, 10, 11] {
+            assert_eq!(h.find_min(), i);
+            h = h.delete_min();
+        }
+        assert!(h.is_empty());
+        h = h2.merge(&h1);
+        for i in &[0, 1, 2, 3, 4, 7, 10, 11] {
+            assert_eq!(h.find_min(), i);
+            h = h.delete_min();
+        }
+        assert!(h.is_empty());
     }
 }
