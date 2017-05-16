@@ -4,41 +4,55 @@
 
 use std::fmt::Debug;
 use std::cmp::{Ord, Ordering};
+use std::rc::Rc;
 use list::{List, Node};
 
-type Trees<T> = List<Tree<T>>;
+type TreeNodes<T> = List<TreeNode<T>>;
 
+#[derive(Clone, Debug)]
+struct TreeNode<T: Clone + Ord + Debug> {
+    val: T,
+    children: TreeNodes<T>,
+}
+
+impl<T> TreeNode<T>
+where T: Clone + Ord + Debug {
+    fn cons_child(&self, t: &TreeNode<T>) -> TreeNode<T> {
+        TreeNode {
+            val: self.val.clone(),
+            children: self.children.cons(t.clone()),
+        }
+    }
+}
+
+// exercise 3.6: remove rank from each node of tree
 #[derive(Clone, Debug)]
 struct Tree<T: Clone + Ord + Debug> {
     rank: i32,
-    val: T,
-    children: Trees<T>,
-}
-
-// Binomial heap is a sorted list of binomial trees whose ranks are not the same each other.
-#[derive(Debug)]
-pub struct BinHeap<T: Clone + Ord + Debug> {
-    trees: Trees<T>,
+    root: TreeNode<T>,
 }
 
 impl<T> Tree<T>
 where T: Clone + Ord + Debug {
     fn link(&self, other: &Self) -> Self {
         assert_eq!(self.rank, other.rank);
-        if self.val <= other.val {
-            Tree {
-                rank: self.rank + 1,
-                val: self.val.clone(),
-                children: self.children.cons(other.clone()),
-            }
+
+        let root = if self.root.val <= other.root.val {
+            self.root.cons_child(&other.root)
         } else {
-            Tree {
-                rank: self.rank + 1,
-                val: other.val.clone(),
-                children: other.children.cons(self.clone()),
-            }
-        }
+            other.root.cons_child(&self.root)
+        };
+
+        Tree {rank: self.rank + 1, root}
     }
+}
+
+type Trees<T> = List<Tree<T>>;
+
+// Binomial heap is a sorted list of binomial trees whose ranks are not the same each other.
+#[derive(Debug)]
+pub struct BinHeap<T: Clone + Ord + Debug> {
+    trees: Trees<T>,
 }
 
 fn heap<T: Clone + Ord + Debug>(trees: Trees<T>) -> BinHeap<T> {
@@ -65,7 +79,11 @@ where T: Clone + Ord + Debug {
     }
 
     pub fn insert(&self, v: T) -> Self {
-        heap(BinHeap::insert_tree(Tree{rank: 0, val: v, children: List::empty()}, &self.trees))
+        let t = Tree {
+            rank: 0,
+            root: TreeNode{val: v, children: List::empty()},
+        };
+        heap(BinHeap::insert_tree(t, &self.trees))
     }
 
     fn merge_trees(ts1: &Trees<T>, ts2: &Trees<T>) -> Trees<T> {
@@ -86,29 +104,29 @@ where T: Clone + Ord + Debug {
         heap(BinHeap::merge_trees(&self.trees, &other.trees))
     }
 
-    fn find_min_tree(trees: &Trees<T>) -> &Tree<T> {
+    fn find_min_root(trees: &Trees<T>) -> &Tree<T> {
         match *trees.0 {
             Node::Nil => panic!("No tree in heap!"),
             Node::Cons(ref t, ref ts) if ts.is_empty() => t,
             Node::Cons(ref t, ref ts) => {
-                let t2 = BinHeap::find_min_tree(ts);
-                if t.val <= t2.val { t } else { t2 }
+                let t2 = BinHeap::find_min_root(ts);
+                if t.root.val <= t2.root.val { t } else { t2 }
             },
         }
     }
 
-    // exercise 3.5: Implement find_min without remove_min_tree
+    // exercise 3.5: Implement find_min without remove_min_root
     pub fn find_min(&self) -> &T {
-        &BinHeap::find_min_tree(&self.trees).val
+        &BinHeap::find_min_root(&self.trees).root.val
     }
 
-    fn remove_min_tree(trees: &Trees<T>) -> (&Tree<T>, Trees<T>) {
+    fn remove_min_root(trees: &Trees<T>) -> (&Tree<T>, Trees<T>) {
         match *trees.0 {
             Node::Nil => panic!("No tree in heap!"),
             Node::Cons(ref t, ref ts) if ts.is_empty() => (t, List::empty()),
             Node::Cons(ref t, ref ts) => {
-                let (t2, ts2) = BinHeap::remove_min_tree(ts);
-                if t.val <= t2.val {
+                let (t2, ts2) = BinHeap::remove_min_root(ts);
+                if t.root.val <= t2.root.val {
                     (t, ts.clone())
                 } else {
                     (t2, ts2.cons(t.clone()))
@@ -117,10 +135,21 @@ where T: Clone + Ord + Debug {
         }
     }
 
+    fn nodes_to_trees(rank: i32, ts: &TreeNodes<T>) -> Trees<T> {
+        match *ts.0 {
+            Node::Nil => List::empty(),
+            Node::Cons(ref t, ref ts) => {
+                let ts = BinHeap::nodes_to_trees(rank, ts);
+                List(Rc::new(Node::Cons(Tree{rank, root: t.clone()}, ts)))
+            },
+        }
+    }
+
     pub fn delete_min(&self) -> Self {
         // Note: Rust's pattern cannot contain both by-ref and by-move binding at the same time.
-        let (t, ts2) = BinHeap::remove_min_tree(&self.trees);
-        let &Tree{rank: _, val: _, children: ref ts1} = t;
+        let (t, ts1) = BinHeap::remove_min_root(&self.trees);
+        let &Tree{rank: ref rank, root: TreeNode{val: _, children: ref children}} = t;
+        let ts2 = BinHeap::nodes_to_trees(rank - 1, children);
         heap(BinHeap::merge_trees(&ts1.rev(), &ts2))
     }
 }
