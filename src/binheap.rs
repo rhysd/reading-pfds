@@ -1,4 +1,4 @@
-// p.30 - p.
+// p.30 - p.33
 //
 // Binomial heap
 
