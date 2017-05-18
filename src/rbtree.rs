@@ -37,8 +37,13 @@ where T: Clone + PartialOrd + Debug {
             }
         }
     }
-    // fn black(left: Link<T>, right: Link<T>, val: T) -> Self
-    // fn red(left: Link<T>, right: Link<T>, val: T) -> Self
+}
+
+fn black<T: Clone + PartialOrd + Debug>(left: Link<T>, right: Link<T>, val: T) -> Link<T> {
+    Rc::new(Node::Knot{color: Color::Black, left, right, val})
+}
+fn red<T: Clone + PartialOrd + Debug>(left: Link<T>, right: Link<T>, val: T) -> Link<T> {
+    Rc::new(Node::Knot{color: Color::Red, left, right, val})
 }
 
 type Link<T> = Rc<Node<T>>;
@@ -63,65 +68,61 @@ where T: Clone + PartialOrd + Debug {
     }
 
     // exercise 3.10: Eliminate redundant comparison
-    fn balance(color: Color, left: Link<T>, right: Link<T>, val: T) -> Node<T> {
+    fn balance(color: Color, left: Link<T>, right: Link<T>, val: T) -> Link<T> {
         if color == Color::Red {
-            return Node::Knot{color, left, right, val};
+            return Rc::new(Node::Knot{color, left, right, val});
         }
 
         if let Node::Knot{color: Color::Red, left: ref l1, right: ref r1, val: ref v1} = *left {
             if let Node::Knot{color: Color::Red, left: ref l2, right: ref r2, val: ref v2} = **l1 {
-                return Node::Knot{
-                    color: Color::Red,
-                    left: Rc::new(Node::Knot{color: Color::Black, left: l2.clone(), right: r2.clone(), val: v2.clone()}),
-                    right: Rc::new(Node::Knot{color: Color::Black, left: r1.clone(), right, val}),
-                    val: v1.clone(),
-                };
+                return red(
+                    black(l2.clone(), r2.clone(), v2.clone()),
+                    black(r1.clone(), right, val),
+                    v1.clone(),
+                );
             }
             if let Node::Knot{color: Color::Red, left: ref l2, right: ref r2, val: ref v2} = **r1 {
-                return Node::Knot{
-                    color: Color::Red,
-                    left: Rc::new(Node::Knot{color: Color::Black, left: l1.clone(), right: l2.clone(), val: v1.clone()}),
-                    right: Rc::new(Node::Knot{color: Color::Black, left: r2.clone(), right, val}),
-                    val: v2.clone(),
-                };
+                return red(
+                    black(l1.clone(), l2.clone(), v1.clone()),
+                    black(r2.clone(), right, val),
+                    v2.clone(),
+                );
             }
         } if let Node::Knot{color: Color::Red, left: ref l1, right: ref r1, val: ref v1} = *right {
             if let Node::Knot{color: Color::Red, left: ref l2, right: ref r2, val: ref v2} = **l1 {
-                return Node::Knot{
-                    color: Color::Red,
-                    left: Rc::new(Node::Knot{color: Color::Black, left, right: l2.clone(), val}),
-                    right: Rc::new(Node::Knot{color: Color::Black, left: r2.clone(), right: r1.clone(), val: v1.clone()}),
-                    val: v2.clone(),
-                };
+                return red(
+                    black(left, l2.clone(), val),
+                    black(r2.clone(), r1.clone(), v1.clone()),
+                    v2.clone(),
+                );
             }
             if let Node::Knot{color: Color::Red, left: ref l2, right: ref r2, val: ref v2} = **r1 {
-                return Node::Knot{
-                    color: Color::Red,
-                    left: Rc::new(Node::Knot{color: Color::Black, left, right: l1.clone(), val}),
-                    right: Rc::new(Node::Knot{color: Color::Black, left: l2.clone(), right: r2.clone(), val: v2.clone()}),
-                    val: v1.clone(),
-                };
+                return red(
+                    black(left, l1.clone(), val),
+                    black(l2.clone(), r2.clone(), v2.clone()),
+                    v1.clone(),
+                );
             }
         }
 
-        return Node::Knot{color, left, right, val};
+        return Rc::new(Node::Knot{color, left, right, val});
     }
 
     fn ins(link: &Link<T>, x: T) -> Link<T> {
         match **link {
             Node::Leaf => {
                 let e = Rc::new(Node::Leaf);
-                Rc::new(Node::Knot{color: Color::Red, left: e.clone(), right: e, val: x})
+                red(e.clone(), e, x)
             },
             Node::Knot{ref color, ref left, ref right, ref val} => {
                 let color = color.clone();
                 let val = val.clone();
                 if x < val {
                     let left = RBTree::ins(left, x);
-                    Rc::new(RBTree::balance(color, left, right.clone(), val))
+                    RBTree::balance(color, left, right.clone(), val)
                 } else if val < x {
                     let right = RBTree::ins(right, x);
-                    Rc::new(RBTree::balance(color, left.clone(), right, val))
+                    RBTree::balance(color, left.clone(), right, val)
                 } else {
                     link.clone()
                 }
@@ -130,6 +131,11 @@ where T: Clone + PartialOrd + Debug {
     }
 
     pub fn insert(&self, v: T) -> Self {
-        RBTree{root: RBTree::ins(&self.root, v)}
+        match *RBTree::ins(&self.root, v) {
+            Node::Knot{color: _, left: ref l, right: ref r, val: ref v} => {
+                RBTree{root: black(l.clone(), r.clone(), v.clone())}
+            },
+            Node::Leaf => unreachable!(),
+        }
     }
 }
