@@ -1,4 +1,4 @@
-// p.33 - p.
+// p.33 - p.38
 //
 // Red-Black tree
 
@@ -136,6 +136,47 @@ where T: Clone + PartialOrd + Debug {
                 RBTree{root: black(l.clone(), r.clone(), v.clone())}
             },
             Node::Leaf => unreachable!(),
+        }
+    }
+
+    fn link_from_sorted(idx: usize, slice: &[T]) -> (Link<T>, usize) {
+        match slice.get(idx) {
+            None => (Rc::new(Node::Leaf), idx),
+            Some(val) => {
+                let (left, idx) = RBTree::link_from_sorted(idx + 1, slice);
+                let (right, idx) = RBTree::link_from_sorted(idx + 1, slice);
+                let color = match &*left {
+                    &Node::Leaf => Color::Red,
+                    &Node::Knot{color: Color::Red, ..} => Color::Black,
+                    &Node::Knot{color: Color::Black, ..} => Color::Black,
+                };
+                (Rc::new(Node::Knot{color, left, right, val: val.clone()}), idx)
+            }
+        }
+    }
+
+    // exercise 3.9: Create RBTree from ordered unique list
+    pub fn from_sorted(slice: &[T]) -> Self {
+        let (root, _) = RBTree::link_from_sorted(0, slice);
+        RBTree{root}
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test() {
+        let t = RBTree::empty();
+        assert!(t.is_empty());
+        let t = t.insert(10).insert(3).insert(7).insert(1).insert(9);
+        assert!(!t.is_empty());
+        match *t.root {
+            Node::Leaf => assert!(false),
+            Node::Knot{color: _, left: _, right: _, val} => {
+                assert_eq!(val, 7);
+            },
         }
     }
 }
