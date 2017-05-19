@@ -3,3 +3,4 @@ pub mod bintree;
 pub mod leftheap;
 pub mod binheap;
 pub mod rbtree;
+pub mod lazy;
