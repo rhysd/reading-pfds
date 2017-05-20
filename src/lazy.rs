@@ -13,26 +13,24 @@ enum Value<'a, T: 'a> {
 
 use self::Value::*;
 
-pub struct Boxed<'a, T: 'a>(Box<Value<'a, T>>);
-
 pub struct Thunk<'a, T: 'a> {
-    boxed: RefCell<Boxed<'a, T>>
+    boxed: RefCell<Box<Value<'a, T>>>
 }
 
 impl<'a, T: 'a> Thunk<'a, T> {
     pub fn new<F>(f: F) -> Self where F: Fn() -> T + 'a {
-        Thunk { boxed: RefCell::new(Boxed(Box::new(NotYet(Box::new(f))))) }
+        Thunk { boxed: RefCell::new(Box::new(NotYet(Box::new(f)))) }
     }
 
     pub fn force(&self) {
         let mut boxed = &mut *self.boxed.borrow_mut();
-        let val = match *boxed.0 {
+        let val = match **boxed {
             NotYet(ref invoke) => {
                 Box::new(Memo(invoke()))
             },
             Memo(_) => return,
         };
-        boxed.0 = val;
+        *boxed = val;
     }
 }
 
@@ -43,7 +41,7 @@ impl<'a, T: 'a> Deref for Thunk<'a, T> {
         let boxed = unsafe {
             self.boxed.as_ptr().as_ref().unwrap()
         };
-        match *boxed.0 {
+        match **boxed {
             Memo(ref v) => v,
             _ => unreachable!(),
         }
@@ -56,7 +54,7 @@ impl<'a, T: 'a> DerefMut for Thunk<'a, T> {
         let boxed = unsafe {
             self.boxed.as_ptr().as_mut().unwrap()
         };
-        match *boxed.0 {
+        match **boxed {
             Memo(ref mut v) => v,
             _ => unreachable!(),
         }
