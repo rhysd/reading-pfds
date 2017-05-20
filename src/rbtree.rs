@@ -148,7 +148,7 @@ where T: Clone + PartialOrd + Debug {
                 let color = match &*left {
                     &Node::Leaf => Color::Red,
                     &Node::Knot{color: Color::Red, ..} => Color::Black,
-                    &Node::Knot{color: Color::Black, ..} => Color::Black,
+                    &Node::Knot{color: Color::Black, ..} => Color::Red,
                 };
                 (Rc::new(Node::Knot{color, left, right, val: val.clone()}), idx)
             }

@@ -1,10 +1,10 @@
-// p.39 - p.
+// p.39 - p.41
 //
 // Lazy evaluation
 
 use std::boxed::Box;
 use std::cell::RefCell;
-use std::ops::Deref;
+use std::ops::{Deref, DerefMut};
 
 enum Value<'a, T: 'a> {
     NotYet(Box<Fn() -> T + 'a>),
@@ -36,15 +36,28 @@ impl<'a, T: 'a> Thunk<'a, T> {
     }
 }
 
-impl<'x, T: 'x> Deref for Thunk<'x, T> {
+impl<'a, T: 'a> Deref for Thunk<'a, T> {
     type Target = T;
-    fn deref<'a>(&'a self) -> &'a T {
+    fn deref(&self) -> &T {
         self.force();
         let boxed = unsafe {
             self.boxed.as_ptr().as_ref().unwrap()
         };
         match *boxed.0 {
             Memo(ref v) => v,
+            _ => unreachable!(),
+        }
+    }
+}
+
+impl<'a, T: 'a> DerefMut for Thunk<'a, T> {
+    fn deref_mut(&mut self) -> &mut T {
+        self.force();
+        let boxed = unsafe {
+            self.boxed.as_ptr().as_mut().unwrap()
+        };
+        match *boxed.0 {
+            Memo(ref mut v) => v,
             _ => unreachable!(),
         }
     }
@@ -71,6 +84,12 @@ mod tests {
 
         // It returns memo instead of evaluating the expression at second access.
         let k = i.as_str();
+        assert_eq!(k, "this expression will be evaluated lazily!");
+
+        let mut i = lazily!("this expression will be evaluated lazily!".to_string());
+        let mut j = i.as_str();
+        assert_eq!(j, "this expression will be evaluated lazily!");
+        let mut k = i.as_str();
         assert_eq!(k, "this expression will be evaluated lazily!");
     }
 }
