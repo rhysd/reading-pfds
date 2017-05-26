@@ -6,7 +6,6 @@ use std::fmt;
 use std::fmt::Debug;
 use std::boxed::Box;
 use std::cell::RefCell;
-use std::ops::Deref;
 use std::rc::Rc;
 
 enum Thunk<'a, T: 'a + Debug> {

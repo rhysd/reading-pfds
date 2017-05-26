@@ -2,7 +2,6 @@
 
 use std::fmt::Debug;
 use std::rc::Rc;
-use std::ops::Deref;
 
 #[derive(Clone, Debug)]
 pub enum Node<T: Clone + Debug> {

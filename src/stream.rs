@@ -59,7 +59,7 @@ where T: 'a + Clone + Debug {
         }
         match *xs.eval() {
             Nil => Delayed::constant(Nil),
-            Cons(ref y, ref ys) => Stream::drop_impl(xs, u-1),
+            Cons(_, ref ys) => Stream::drop_impl(ys, u-1),
         }
     }
     pub fn drop(&'a self, u: usize) -> Self {

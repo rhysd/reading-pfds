@@ -148,7 +148,7 @@ where T: Clone + Ord + Debug {
     pub fn delete_min(&self) -> Self {
         // Note: Rust's pattern cannot contain both by-ref and by-move binding at the same time.
         let (t, ts1) = BinHeap::remove_min_root(&self.trees);
-        let &Tree{rank: ref rank, root: TreeNode{val: _, children: ref children}} = t;
+        let &Tree{ref rank, root: TreeNode{val: _, ref children}} = t;
         let ts2 = BinHeap::nodes_to_trees(rank - 1, children);
         heap(BinHeap::merge_trees(&ts1.rev(), &ts2))
     }
