@@ -29,8 +29,8 @@ where T: Clone + Debug {
         match (f.is_empty(), r.is_empty()) {
             (true, true) => Deque{f, r},
             (false, false) => Deque{f, r},
-            (true, false) => Deque{f: r.tail().rev(), r: List::empty().cons(r.head().clone())},
-            (false, true) => Deque{f: List::empty().cons(f.head().clone()), r: f.tail().rev()},
+            (true, false) => Deque{f: r.tail().rev(), r: List::one(r.head().clone())},
+            (false, true) => Deque{f: List::one(f.head().clone()), r: f.tail().rev()},
         }
     }
 
