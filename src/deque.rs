@@ -27,10 +27,9 @@ where T: Clone + Debug {
         // Meet Invariant: Both f and r must have one or more elements if the
         // Deque has two or more elements.
         match (f.is_empty(), r.is_empty()) {
-            (true, true) => Deque{f, r},
-            (false, false) => Deque{f, r},
             (true, false) => Deque{f: r.tail().rev(), r: List::one(r.head().clone())},
             (false, true) => Deque{f: List::one(f.head().clone()), r: f.tail().rev()},
+            _ => Deque{f, r},
         }
     }
 
@@ -45,9 +44,7 @@ where T: Clone + Debug {
     pub fn deq_front(&self) -> Self {
         match self.f.root() {
             &Node::Nil => {
-                if self.r.is_empty() {
-                    panic!("Deque is empty!")
-                }
+                if self.r.is_empty() { panic!("Deque is empty!") }
                 // Only one element is in deque due to invariant
                 Deque::empty()
             },
@@ -60,9 +57,7 @@ where T: Clone + Debug {
     pub fn deq_back(&self) -> Self {
         match self.r.root() {
             &Node::Nil => {
-                if self.f.is_empty() {
-                    panic!("Deque is empty!")
-                }
+                if self.f.is_empty() { panic!("Deque is empty!") }
                 // Only one element is in deque due to invariant
                 Deque::empty()
             },
@@ -72,30 +67,23 @@ where T: Clone + Debug {
         }
     }
 
-    pub fn front(&self) -> &T {
-        match self.f.root() {
+    fn peek<'a>(x: &'a List<T>, y: &'a List<T>) -> &'a T {
+        match x.root() {
             &Node::Nil => {
-                if self.r.is_empty() {
-                    panic!("Deque is empty!")
-                }
+                if y.is_empty() { panic!("Deque is empty!") }
                 // Only one element is in deque due to invariant
-                self.r.head()
+                y.head()
             },
-            &Node::Cons(ref x, _) => x,
+            &Node::Cons(ref v, _) => v,
         }
     }
 
+    pub fn front(&self) -> &T {
+        Deque::peek(&self.f, &self.r)
+    }
+
     pub fn back(&self) -> &T {
-        match self.r.root() {
-            &Node::Nil => {
-                if self.f.is_empty() {
-                    panic!("Deque is empty!")
-                }
-                // Only one element is in deque due to invariant
-                self.f.head()
-            },
-            &Node::Cons(ref x, _) => x,
-        }
+        Deque::peek(&self.r, &self.f)
     }
 }
 
@@ -153,6 +141,12 @@ mod tests {
         assert_eq!(d.front(), &1);
         assert_eq!(d.back(), &4);
         let d = d.deq_back().deq_front().deq_back().deq_front();
+        assert!(d.is_empty());
+
+        let d = Deque::empty().enq_front(2).enq_back(3).enq_front(1).enq_back(4);
+        assert_eq!(d.front(), &1);
+        assert_eq!(d.back(), &4);
+        let d = d.deq_front().deq_back().deq_front().deq_back();
         assert!(d.is_empty());
     }
 } // mod tests
