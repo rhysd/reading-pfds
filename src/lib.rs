@@ -8,3 +8,4 @@ pub mod binheap;
 pub mod rbtree;
 pub mod stream;
 pub mod queue;
+pub mod deque;
