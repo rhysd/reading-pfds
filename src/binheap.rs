@@ -66,7 +66,7 @@ where T: Clone + Ord + Debug {
     }
 
     fn insert_tree(t: Tree<T>, ts: &Trees<T>) -> Trees<T> {
-        match *ts.0 {
+        match *ts.root() {
             Node::Nil => ts.cons(t),
             Node::Cons(ref t2, ref ts2) => {
                 if t.rank < t2.rank {
@@ -87,7 +87,7 @@ where T: Clone + Ord + Debug {
     }
 
     fn merge_trees(ts1: &Trees<T>, ts2: &Trees<T>) -> Trees<T> {
-        match (&*ts1.0, &*ts2.0) {
+        match (ts1.root(), ts2.root()) {
             (&Node::Nil, _) => ts2.clone(),
             (_, &Node::Nil) => ts1.clone(),
             (&Node::Cons(ref x1, ref xs1), &Node::Cons(ref x2, ref xs2)) => {
@@ -105,7 +105,7 @@ where T: Clone + Ord + Debug {
     }
 
     fn find_min_root(trees: &Trees<T>) -> &Tree<T> {
-        match *trees.0 {
+        match *trees.root() {
             Node::Nil => panic!("No tree in heap!"),
             Node::Cons(ref t, ref ts) if ts.is_empty() => t,
             Node::Cons(ref t, ref ts) => {
@@ -121,7 +121,7 @@ where T: Clone + Ord + Debug {
     }
 
     fn remove_min_root(trees: &Trees<T>) -> (&Tree<T>, Trees<T>) {
-        match *trees.0 {
+        match *trees.root() {
             Node::Nil => panic!("No tree in heap!"),
             Node::Cons(ref t, ref ts) if ts.is_empty() => (t, List::empty()),
             Node::Cons(ref t, ref ts) => {
@@ -136,7 +136,7 @@ where T: Clone + Ord + Debug {
     }
 
     fn nodes_to_trees(rank: i32, ts: &TreeNodes<T>) -> Trees<T> {
-        match *ts.0 {
+        match *ts.root() {
             Node::Nil => List::empty(),
             Node::Cons(ref t, ref ts) => {
                 let ts = BinHeap::nodes_to_trees(rank, ts);

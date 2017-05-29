@@ -48,9 +48,9 @@ where T: Clone + Debug {
     }
 
     pub fn dequeue(&self) -> Self {
-        match *self.f.0 {
-            Node::Nil => panic!("Queue is empty"),
-            Node::Cons(_, ref xs) => Queue::check(xs.clone(), self.r.clone()),
+        match self.f.root() {
+            &Node::Nil => panic!("Queue is empty"),
+            &Node::Cons(_, ref xs) => Queue::check(xs.clone(), self.r.clone()),
         }
     }
 }

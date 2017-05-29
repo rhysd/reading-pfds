@@ -35,6 +35,10 @@ where T: Clone + Debug {
         list(Node::Cons(v, self.clone()))
     }
 
+    pub fn root(&self) -> &Node<T> {
+        &*self.0
+    }
+
     pub fn head(&self) -> &T {
         match *self.0 {
             Node::Nil => panic!("Node is empty!"),
@@ -156,5 +160,19 @@ mod tests {
         assert_eq!(e.head(), &2);
 
         assert!(List::<i32>::empty().rev().is_empty());
+    }
+
+    #[test]
+    fn test_root() {
+        let e = List::empty();
+        match *e.root() {
+            Node::Nil => {},
+            _ => assert!(false),
+        };
+        let e = e.cons(1);
+        match *e.root() {
+            Node::Nil => assert!(false),
+            _ => {},
+        };
     }
 }
