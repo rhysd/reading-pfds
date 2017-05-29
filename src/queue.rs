@@ -35,7 +35,7 @@ where T: Clone + Debug {
         }
     }
 
-    pub fn enqueue(&self, x: T) -> Self {
+    pub fn enq(&self, x: T) -> Self {
         Queue::check(self.f.clone(), self.r.cons(x))
     }
 
@@ -47,10 +47,40 @@ where T: Clone + Debug {
         }
     }
 
-    pub fn dequeue(&self) -> Self {
+    pub fn deq(&self) -> Self {
         match self.f.root() {
             &Node::Nil => panic!("Queue is empty"),
             &Node::Cons(_, ref xs) => Queue::check(xs.clone(), self.r.clone()),
         }
+    }
+}
+
+#[cfg(tests)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_empty() {
+        let q = Queue::empty();
+        assert!(q.is_empty());
+        let q = q.enq(1);
+        assert!(!q.is_empty());
+    }
+
+    #[test]
+    fn test_top() {
+        let q = Queue::empty().enq(1);
+        assert_eq!(q.top(), &1);
+    }
+
+    #[test]
+    fn test_invariants() {
+        let q = Queue::empty().enq(1).enq(2).enq(3);
+        let q = q.deq();
+        assert_eq!(q.top(), &2);
+        let q = q.enq(4).deq().deq();
+        assert_eq!(q.top(), &4);
+        let q = q.deq();
+        assert!(q.is_empty());
     }
 }
