@@ -4,7 +4,6 @@
 
 use std::fmt::Debug;
 use list::{List, Node};
-use std::rc::Rc;
 
 // Invariant: When it contains two or more elements, both f and r contains at least one element.
 #[derive(Clone, Debug)]
@@ -22,16 +21,6 @@ where T: Clone + Debug {
 
     pub fn is_empty(&self) -> bool {
         self.f.is_empty() && self.r.is_empty()
-    }
-
-    fn ensure_not_empty(&self) {
-        if self.is_empty() {
-            panic!("Deque is empty!")
-        }
-    }
-
-    fn has_zero_or_one(&self) -> bool {
-        Rc::ptr_eq(&self.f.0, &self.r.0)
     }
 
     fn make(f: List<T>, r: List<T>) -> Self {
@@ -109,3 +98,61 @@ where T: Clone + Debug {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_empty() {
+        let d = Deque::empty();
+        assert!(d.is_empty());
+        let d = d.enq_front(1);
+        assert!(!d.is_empty());
+    }
+
+    #[test]
+    fn test_front_to_back() {
+        let d = Deque::empty().enq_front(1);
+        assert_eq!(d.front(), &1);
+        assert_eq!(d.back(), &1);
+
+        let d = d.enq_front(2).enq_front(3);
+        assert_eq!(d.front(), &3);
+        assert_eq!(d.back(), &1);
+
+        let d = d.deq_back();
+        assert_eq!(d.front(), &3);
+        assert_eq!(d.back(), &2);
+
+        let d = d.deq_back().deq_back();
+        assert!(d.is_empty());
+    }
+
+    #[test]
+    fn test_back_to_front() {
+        let d = Deque::empty().enq_back(1);
+        assert_eq!(d.front(), &1);
+        assert_eq!(d.back(), &1);
+
+        let d = d.enq_back(2).enq_back(3);
+        assert_eq!(d.front(), &1);
+        assert_eq!(d.back(), &3);
+
+        let d = d.deq_front();
+        assert_eq!(d.front(), &2);
+        assert_eq!(d.back(), &3);
+
+        let d = d.deq_front().deq_front();
+        assert!(d.is_empty());
+    }
+
+    #[test]
+    fn test_enq_both_sides() {
+        let d = Deque::empty().enq_front(2).enq_back(3).enq_front(1).enq_back(4);
+        assert_eq!(d.front(), &1);
+        assert_eq!(d.back(), &4);
+        let d = d.deq_back().deq_front().deq_back().deq_front();
+        assert!(d.is_empty());
+    }
+} // mod tests
