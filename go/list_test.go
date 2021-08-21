@@ -58,6 +58,22 @@ func TestListTail(t *testing.T) {
 	}
 }
 
+func TestListUncons(t *testing.T) {
+	l := NewList[int]()
+	l2 := l.Cons(1)
+	l3 := l2.Cons(2)
+
+	if _, _, ok := l.Uncons(); ok {
+		t.Fatal(l)
+	}
+	if h, tl, ok := l2.Uncons(); !ok || h != 1 || tl != l {
+		t.Fatal(ok, h, tl)
+	}
+	if h, tl, ok := l3.Uncons(); !ok || h != 2 || tl != l2 {
+		t.Fatal(ok, h, tl)
+	}
+}
+
 func TestListConcat(t *testing.T) {
 	l := NewList[int]()
 	l2 := l.Cons(1)
@@ -99,5 +115,22 @@ func TestListUpdate(t *testing.T) {
 	_, ok = l.Update(100, 10)
 	if ok {
 		t.Fatal(l)
+	}
+}
+
+func TestListRev(t *testing.T) {
+	l := NewList[int]().Rev()
+	if !l.Empty() {
+		t.Fatal(l)
+	}
+
+	l = l.Cons(42).Rev()
+	if x, ok := l.Head(); !ok || x != 42 {
+		t.Fatal(x, l)
+	}
+
+	l = l.Cons(21).Cons(10).Cons(5).Rev()
+	if s := l.ToSlice(); !cmp.Equal(s, []int{42, 21, 10, 5}) {
+		t.Fatal(s)
 	}
 }

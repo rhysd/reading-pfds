@@ -37,6 +37,14 @@ func (l *List[T]) Tail() (*List[T], bool) {
 	return l.next, true
 }
 
+func (l *List[T]) Uncons() (T, *List[T], bool) {
+	if l == nil {
+		var zero T
+		return zero, nil, false
+	}
+	return l.val, l.next, true
+}
+
 func (l *List[T]) Concat(other *List[T]) *List[T] {
 	if l == nil {
 		return other
@@ -56,6 +64,24 @@ func (l *List[T]) Update(idx int, x T) (*List[T], bool) {
 		return nil, false
 	}
 	return l2.Cons(l.val), true
+}
+
+func (l *List[T]) rev(ret *List[T]) *List[T] {
+	if l == nil {
+		return ret
+	}
+	return l.next.rev(ret.Cons(l.val))
+}
+
+func (l *List[T]) Rev() *List[T] {
+	return l.rev(nil)
+}
+
+func (l *List[T]) Len() int {
+	if l == nil {
+		return 0
+	}
+	return l.next.Len() + 1
 }
 
 func (l *List[T]) buildSlice(s []T) []T {
