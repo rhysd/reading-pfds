@@ -1,20 +1,17 @@
 package pfds
 
-type LessEq interface {
-	~int | ~int8 | ~int16 | ~int32 | ~int64 |
-		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 | ~uintptr |
-		~float32 | ~float64 |
-		~string
+type LessEq[T any] interface {
+	LessEq(T) bool
 }
 
-type binHeapTree[T LessEq] struct {
+type binHeapTree[T LessEq[T]] struct {
 	rank int
 	elem T
 	children *List[*binHeapTree[T]]
 }
 
 func (t *binHeapTree[T]) link(other *binHeapTree[T]) *binHeapTree[T] {
-	if t.elem <= other.elem {
+	if t.elem.LessEq(other.elem) {
 		return &binHeapTree[T]{t.rank + 1, t.elem, t.children.Cons(other)}
 	}
 	return &binHeapTree[T]{t.rank + 1, other.elem, other.children.Cons(t)}
@@ -34,7 +31,7 @@ func (t *binHeapTree[T]) insertTo(ts *List[*binHeapTree[T]]) *List[*binHeapTree[
 	return t.link(t2).insertTo(ts2)
 }
 
-func mergeBinHeapTrees[T LessEq](lhs, rhs *List[*binHeapTree[T]]) *List[*binHeapTree[T]] {
+func mergeBinHeapTrees[T LessEq[T]](lhs, rhs *List[*binHeapTree[T]]) *List[*binHeapTree[T]] {
 	t1, ts1, ok := lhs.Uncons()
 	if !ok {
 		return rhs
@@ -52,7 +49,7 @@ func mergeBinHeapTrees[T LessEq](lhs, rhs *List[*binHeapTree[T]]) *List[*binHeap
 	return t1.link(t2).insertTo(mergeBinHeapTrees(ts1, ts2))
 }
 
-func removeMinBinHeapTrees[T LessEq](trees *List[*binHeapTree[T]]) (*binHeapTree[T], *List[*binHeapTree[T]], bool) {
+func removeMinBinHeapTrees[T LessEq[T]](trees *List[*binHeapTree[T]]) (*binHeapTree[T], *List[*binHeapTree[T]], bool) {
 	t, ts, ok := trees.Uncons()
 	if !ok {
 		return nil, nil, false
@@ -61,13 +58,13 @@ func removeMinBinHeapTrees[T LessEq](trees *List[*binHeapTree[T]]) (*binHeapTree
 		return t, nil, true
 	}
 	t2, ts2, _ := removeMinBinHeapTrees(ts)
-	if t.elem <= t2.elem {
+	if t.elem.LessEq(t2.elem) {
 		return t, ts, true
 	}
 	return t2, ts2.Cons(t), true
 }
 
-type BinHeap[T LessEq] struct {
+type BinHeap[T LessEq[T]] struct {
 	trees *List[*binHeapTree[T]]
 }
 
